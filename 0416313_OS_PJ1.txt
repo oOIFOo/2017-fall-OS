@@ -1,0 +1,61 @@
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+MODULE_DESCRIPTION("Hello_world");
+MODULE_LICENSE("GPL");
+
+struct birthday{
+	int day;
+	int year;
+	int month;
+	struct list_head list;
+};
+
+ struct birthday bir;
+
+static int hello_init(void)
+{
+ struct list_head *pos;
+ struct birthday *tmp;
+
+ INIT_LIST_HEAD(&bir.list);
+
+ unsigned int i;
+ for(i = 5;i > 0;i--){
+ 	tmp = kmalloc(sizeof(struct birthday), GFP_KERNEL);
+	tmp -> year = 1993 + i;
+	tmp -> month = 1;
+	tmp-> day = 27 + i;
+	list_add_tail(&(tmp -> list),&(bir.list));
+ }
+
+ list_for_each_entry(tmp, &bir.list, list){
+ 	printk("%d/%d/%d\n",tmp -> year,tmp -> month,tmp -> day);
+ }
+ return 1;
+}
+
+static void hello_exit(void)
+{
+ struct birthday *tmp;
+ struct list_head *pos, *q;
+
+ unsigned int i = 1;
+ list_for_each_safe(pos, q,&(bir.list)){
+	tmp = list_entry(pos, struct birthday, list);
+	printk("delete item %d", i);
+	list_del(pos);
+	kfree(tmp);
+	i++;
+ }
+ 
+ printk("delete item %d", i);
+
+ list_for_each_entry(tmp, &bir.list, list){
+ 	printk("%d/%d/%d\n",tmp -> year,tmp -> month,tmp -> day);
+ }
+}
+
+module_init(hello_init);
+module_exit(hello_exit);

@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+ 
+#define NUM_THREADS 18
+
+typedef struct{
+int row;
+int column;
+} parameters;
+
+int input[9][9];
+
+void *check_row(void *arg) {
+//printf("=======================================================================================================================================================================================\n");
+  int tmp = 0, i, j;
+  parameters *data = (parameters *)arg;
+  for(i = 0;i < 9; i++){
+	tmp = 0;
+  	for(j = 0;j < 9;j++) {
+		tmp = tmp + input[i][j];
+	}
+  	if(tmp != 45) {
+		pthread_exit(&tmp);
+	}
+  }
+  pthread_exit((void*)45);
+}
+
+
+void *check_col(void *arg) {
+  int tmp = 0, i, j;
+  parameters *data = (parameters *)arg;
+  for(i = 0;i < 9; i++){
+	tmp = 0;
+  	for(j = 0;j < 9;j++) {
+		tmp = tmp + input[j][i];
+	}
+  	if(tmp != 45) {
+		pthread_exit((void*)tmp);
+	}
+  }
+  pthread_exit((void*)45);
+}
+
+void *check_nine(void *arg){
+  int tmp = 0, i, j, row, col;
+  parameters *in;
+  in = (parameters*) arg;
+  col = in -> column;
+  row = in -> row;
+  for(i = row;i < row + 3;i++){
+ 	for(j = col;j < col + 3;j++){
+	    tmp = tmp + input[i][j];
+	}
+  }
+ // printf("(%d %d %d)\n", row, col, tmp);
+  if(tmp != 45){
+  	pthread_exit((void*)tmp);
+  }
+  pthread_exit((void*)45);
+}
+ 
+int main(int argc, char **argv) {
+  
+  FILE *fp;
+  int  i,j;
+  fp = fopen(argv[1],"r");
+  
+  for ( i = 0; i < 9; i++ )
+  {
+     for ( j = 0; j < 9; j++ )
+     {
+      input[i][j] = getc(fp)-48;
+     }
+      if(getc(fp) != 10) {
+	printf("false");
+	return 0;	
+	}
+  }
+
+
+  pthread_t thr[11];
+  pthread_attr_t attr[11];
+  pthread_attr_init (&attr[0]);
+  pthread_attr_init (&attr[1]);
+
+  parameters thr_data[11];
+
+  pthread_create(&thr[0],  &attr[0], check_row, NULL);
+  pthread_create(&thr[1],  &attr[1], check_col, NULL);
+
+
+  for (i = 0; i < 9; i++) {
+    pthread_attr_init (&attr[i + 2]);
+    thr_data[i + 2].row = (i / 3) * 3;
+    thr_data[i + 2].column = (i % 3) * 3;
+    pthread_create(&thr[i + 2],  &attr[i + 2], check_nine, &thr_data[i + 2]);
+  }
+
+  void *ret;
+  for (i = 0; i < 11; i++) {
+    pthread_join(thr[i], &ret);
+   // printf("%d , %d\n", i, ret);
+    if(ret != 45){
+	printf("false\n");
+	return 0;
+    }
+  }
+
+  printf("true\n");
+  fclose(fp);
+  return 0;
+}
